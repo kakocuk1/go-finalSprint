@@ -11,9 +11,18 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
+// Правки по ревью, читаем конфигурацию один раз при старте
+// password хранит пароль, считанный один раз при старте
+var password string
+
+// InitAuth считывает аутентификацию при старте сервера
+func InitAuth() {
+	password = os.Getenv("TODO_PASSWORD")
+}
+
 // passwordHash возвращает SHA256 хэш пароля в виде строки
-func passwordHash(password string) string {
-	h := sha256.Sum256([]byte(password))
+func passwordHash(p string) string {
+	h := sha256.Sum256([]byte(p))
 	return fmt.Sprintf("%x", h)
 }
 
@@ -25,25 +34,24 @@ func signInHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeError(w, "JSON decode error")
+		writeError(w, http.StatusBadRequest, "JSON decode error")
 		return
 	}
 
-	pass := os.Getenv("TODO_PASSWORD")
-	if req.Password != pass {
-		writeError(w, "Incorrect password")
+	if req.Password != password {
+		writeError(w, http.StatusUnauthorized, "Incorrect password")
 		return
 	}
 
 	// формируем JWT-токен, кладём хэш пароля
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"hash": passwordHash(pass),
+		"hash": passwordHash(password),
 		"exp":  time.Now().Add(8 * time.Hour).Unix(), // время жизни куки 8 часов
 	})
 
-	tokenStr, err := token.SignedString([]byte(pass)) // JWT подписывается самим паролем,как секретным ключом
+	tokenStr, err := token.SignedString([]byte(password)) // JWT подписывается самим паролем,как секретным ключом
 	if err != nil {
-		writeError(w, "Token generation error")
+		writeError(w, http.StatusInternalServerError, "Token generation error")
 		return
 	}
 
@@ -53,8 +61,7 @@ func signInHandler(w http.ResponseWriter, r *http.Request) {
 // auth - middleware для проверки JWT-токена в куки.
 func auth(next http.HandlerFunc) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		pass := os.Getenv("TODO_PASSWORD")
-		if pass == "" {
+		if password == "" {
 			// если пароль не зада, аутентификация не требуется(отключена)
 			next(w, r)
 			return
@@ -72,7 +79,7 @@ func auth(next http.HandlerFunc) http.HandlerFunc {
 			if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
 				return nil, fmt.Errorf("Unexpected signing method: %v", t.Header["alg"])
 			}
-			return []byte(pass), nil
+			return []byte(password), nil
 		})
 		if err != nil || !token.Valid {
 			http.Error(w, "Authentification required", http.StatusUnauthorized)
@@ -85,7 +92,7 @@ func auth(next http.HandlerFunc) http.HandlerFunc {
 			http.Error(w, "Authentification required", http.StatusUnauthorized)
 			return
 		}
-		if claims["hash"] != passwordHash(pass) {
+		if claims["hash"] != passwordHash(password) {
 			http.Error(w, "Authentification required", http.StatusUnauthorized)
 			return
 		}

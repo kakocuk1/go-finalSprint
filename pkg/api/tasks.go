@@ -6,6 +6,9 @@ import (
 	"github.com/kakocuk1/go-finalSprint/pkg/db"
 )
 
+// Правки по ревью - выношу лимит в константу
+const tasksLimit = 50
+
 type TasksResp struct {
 	Tasks []*db.Task `json:"tasks"`
 }
@@ -19,13 +22,13 @@ func tasksHandler(w http.ResponseWriter, r *http.Request) {
 	)
 
 	if search != "" {
-		tasks, err = db.TasksSearch(50, search) // 50 ограничение по заданию.
+		tasks, err = db.TasksSearch(tasksLimit, search)
 	} else {
-		tasks, err = db.Tasks(50)
+		tasks, err = db.Tasks(tasksLimit)
 	}
 
 	if err != nil {
-		writeError(w, "Tasks get error: "+err.Error())
+		writeError(w, http.StatusInternalServerError, "Tasks get error: "+err.Error())
 		return
 	}
 

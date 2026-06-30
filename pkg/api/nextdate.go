@@ -94,7 +94,7 @@ func NextDate(now time.Time, dstart string, repeat string) (string, error) {
 			}
 		}
 		for {
-			date = date.AddDate(0, 1, 0)
+			date = date.AddDate(0, 0, 1)
 			if !afterNow(date, now) {
 				continue
 			}
@@ -164,6 +164,10 @@ func lastDayOfMonth(date time.Time) int {
 
 // HTTP-обработчик для получения следующей даты по заданным параметрам
 func nextDayHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		writeError(w, http.StatusMethodNotAllowed, "Method is not allowed")
+		return
+	}
 	nowParam := r.FormValue("now")
 	dateParam := r.FormValue("date")
 	repeatParam := r.FormValue("repeat")

@@ -8,6 +8,7 @@ import (
 )
 
 func Init() {
+	InitAuth()
 	http.HandleFunc("/api/nextdate", nextDayHandler)
 	http.HandleFunc("/api/signin", signInHandler)
 	http.HandleFunc("/api/task", auth(taskHandler))
@@ -27,8 +28,11 @@ func writeJson(w http.ResponseWriter, data any) {
 }
 
 // writeError- превращает текст ошибки в мапу с ключом "error", чтобы получился JSON: {"error": "..."}
-func writeError(w http.ResponseWriter, errText string) {
-	writeJson(w, map[string]string{"error": errText})
+func writeError(w http.ResponseWriter, status int, errText string) {
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	w.WriteHeader(status)
+	resp, _ := json.Marshal(map[string]string{"error": errText})
+	w.Write(resp)
 }
 
 // taskHandler- для HTTP
@@ -42,6 +46,8 @@ func taskHandler(w http.ResponseWriter, r *http.Request) {
 		editTaskHandler(w, r)
 	case http.MethodDelete:
 		deleteHandler(w, r)
+	default:
+		writeError(w, http.StatusMethodNotAllowed, "Method is not allowed")
 	}
 }
 
@@ -50,12 +56,12 @@ func taskHandler(w http.ResponseWriter, r *http.Request) {
 func deleteHandler(w http.ResponseWriter, r *http.Request) {
 	id := r.FormValue("id")
 	if id == "" {
-		writeError(w, "ID is not specified")
+		writeError(w, http.StatusBadRequest, "ID is not specified")
 		return
 	}
 
 	if err := db.DeleteTask(id); err != nil {
-		writeError(w, err.Error())
+		writeError(w, http.StatusNotFound, err.Error())
 		return
 	}
 

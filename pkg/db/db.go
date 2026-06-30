@@ -35,10 +35,17 @@ func Init(dbFile string) error {
 
 	if install {
 		if _, err := db.Exec(schema); err != nil { // создаем schema, если БД создается впервые, если был то просто открываем без создания schema
+			db.Close() // правки после ревью - закрываем коннект перед выходом
 			return err
 		}
 	}
 
 	DB = db // передача открытого подключения к БД из временной локальной переменной в постоянную глобальную
 	return nil
+}
+
+func Close() {
+	if DB != nil {
+		DB.Close()
+	}
 }
