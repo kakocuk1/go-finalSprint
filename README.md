@@ -1,50 +1,171 @@
-# Файлы для итогового задания
+# Task Manager API
 
-В директории `tests` находятся тесты для проверки API, которое должно быть реализовано в веб-сервере.
+A RESTful API for task management written in Go.
 
-Директория `web` содержит файлы фронтенда.
+The application allows users to create, update, delete, search, and complete tasks, supports recurring events, JWT authentication, and persistent data storage using SQLite.
 
-# Планировщик задач
+> Originally developed as the final project for the Yandex Practicum Go Developer course and further improved as part of my backend portfolio.
 
-Веб-сервер на Go — аналог TODO-листа. Хранит задачи в SQLite,
-поддерживает правила повторения и предоставляет REST API.
+---
 
-# Выполненные задания со звёздочкой
+## Features
 
-1) Настройка порта через переменную окружения
-2) Настройка пути к БД через переменную окружения 
-3) Поиск задачи по строке и дате
-4) Аутентификация через JWT токен
-5) Создание Docker-образа
+- User registration and authentication
+- JWT-based authorization
+- CRUD operations for tasks
+- Recurring task support
+- Task search and filtering
+- SQLite database
+- REST API
+- Docker support
+- Automated testing with GitHub Actions
 
-Используемые переменные окружения согласно задания:
-`TODO_PORT` - 7540
-`TODO_DBFILE` - scheduler.db
-`TODO_PASSWORD` - 12345, в тестах включил пароль
-`token` - необходимо получить командой ниже !!! Токен живет всего 8 часов, поэтому необходимо вставить свой:
+---
 
-# Получить токен: 
-curl -X POST http://localhost:7540/api/signin \
-  -H "Content-Type: application/json" \
-  -d '{"password":"12345"}'
- 
-Скопируйте значение `token` из ответа и вставьте в `tests/settings.go`:
-var Token = "eyJhbGci..."
-var Search = true
+## Tech Stack
 
-# Для проверки аутентификации использовать:
-TODO_PASSWORD=12345 go run main.go
+- Go
+- Chi Router
+- SQLite
+- JWT
+- Docker
+- GitHub Actions
+- net/http
+- JSON
 
-# Тесты
-TODO_PASSWORD=12345 go test ./tests
+---
 
-# Docker:
-1) Сначала создаем в директории папку data
-2) docker build -t todo-scheduler .
-3) запускаем контейнер
-docker run -p 7540:7540 \
-  -v $(pwd)/data:/app/data \
-  -e TODO_PASSWORD=12345 \
-  todo-scheduler
+## Project Structure
 
-  Откройте в браузере: http://localhost:7540
+```
+.
+├── pkg/
+│   ├── api/          # HTTP handlers
+│   ├── db/           # Database layer
+│   └── server/       # HTTP server
+├── scheduler/        # Task scheduler
+├── tests/            # Integration tests
+├── Dockerfile
+├── docker-compose.yml
+└── main.go
+```
+
+> The project is planned to be migrated to the `cmd/` + `internal/` layout as it evolves.
+
+---
+
+## Getting Started
+
+### Run locally
+
+```bash
+git clone https://github.com/kakocuk1/go-finalSprint.git
+
+cd go-finalSprint
+
+go run .
+```
+
+---
+
+### Run with Docker
+
+```bash
+docker compose up --build
+```
+
+The application will be available at:
+
+```
+http://localhost:7540
+```
+
+---
+
+## Configuration
+
+The application uses environment variables.
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `TODO_DBFILE` | SQLite database path | `scheduler.db` |
+| `TODO_PORT` | HTTP server port | `7540` |
+| `TODO_PASSWORD` | Admin password | not set |
+
+---
+
+## API Endpoints
+
+### Authentication
+
+| Method | Endpoint |
+|---------|----------|
+| POST | `/api/register` |
+| POST | `/api/login` |
+
+### Tasks
+
+| Method | Endpoint |
+|---------|----------|
+| GET | `/api/tasks` |
+| GET | `/api/task` |
+| POST | `/api/task` |
+| PUT | `/api/task` |
+| DELETE | `/api/task` |
+| POST | `/api/task/done` |
+
+---
+
+## Running Tests
+
+Run all tests:
+
+```bash
+go test ./...
+```
+
+Verbose mode:
+
+```bash
+go test -v ./...
+```
+
+---
+
+## Continuous Integration
+
+GitHub Actions automatically runs on every push and pull request.
+
+Pipeline includes:
+
+- Build
+- Unit tests
+
+---
+
+## Future Improvements
+
+- PostgreSQL support
+- Swagger / OpenAPI documentation
+- Structured logging
+- Graceful shutdown
+- YAML configuration
+- Migration to `cmd/` + `internal/`
+- Refresh token support
+- Integration tests with Testcontainers
+
+---
+
+## Author
+
+**Vitaliy**
+
+Backend Developer (Go)
+
+GitHub: https://github.com/kakocuk1
+
+---
+
+## License
+
+This project is published for educational and portfolio purposes.
